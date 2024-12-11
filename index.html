@@ -27,34 +27,31 @@
         margin-bottom: 20px;
       }
 
-      #informativos {
+      #inputContainer {
         display: flex;
         flex-direction: column;
         gap: 20px;
         margin-bottom: 20px;
-        width: 90%;
+        width: 900px;
         background-color: #fff;
         border-radius: 8px;
         padding: 20px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
-      .input-fields,
-      .input-fields-2 {
+      .input-group {
         display: flex;
-        justify-content: space-between;
+        justify-content: center;
+        gap: 16px;
         width: 100%;
-        max-width: 800px;
       }
 
-      .input-x {
+      .input-field {
         display: flex;
         flex-direction: column;
-        width: 100%;
-        margin: 8px 0;
       }
 
-      #informativos input {
+      #inputContainer input {
         padding: 10px;
         font-size: 1rem;
         border-radius: 8px;
@@ -64,59 +61,25 @@
       }
 
       @media (max-width: 768px) {
-        .input-fields,
-        .input-fields-2 {
+        .input-group {
           flex-direction: column;
           width: 100%;
           gap: 10px;
         }
-
-        #informativos {
-          width: 100%;
-        }
       }
 
-      #informativos p {
-        margin: 0;
-        font-size: 1rem;
-        color: #555;
-      }
-
-      #informativos input:focus {
-        border-color: #4e73df;
-        outline: none;
-      }
-
-      .info p {
-        margin-top: 15px;
-      }
-
-      #projectionTableWrapper {
+      #tableContainer {
         width: 100%;
         max-width: 900px;
-        height: 450px;
-        overflow: auto;
-        background-color: #fff;
-        margin-top: 16px;
-      }
-
-      #card-table {
-        width: 100%;
-        max-width: 900px;
-        height: 500px;
+        height: 630px;
         overflow: hidden;
         border-radius: 8px;
         background-color: #fff;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         padding: 20px;
       }
-      #card-table-button-container {
-        width: 100%;
-        display: flex;
-        justify-content: flex-end;
-      }
 
-      #card-table-button {
+      #exportButton {
         cursor: pointer;
         padding: 8px;
         border: 1px solid #ccc;
@@ -126,8 +89,15 @@
         transition: background-color 0.3s ease;
       }
 
-      #card-table-button:hover {
+      #exportButton:hover {
         background-color: #717171;
+      }
+
+      #exportButtonContainer {
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        margin: 0px 0px 16px 0px;
       }
 
       table {
@@ -152,21 +122,8 @@
         z-index: 3;
       }
 
-      tr.green-row {
-        background-color: #d4edda !important;
-        font-weight: bold !important;
-      }
-
-      .table-container {
-        overflow-x: auto;
-      }
-
       @media (max-width: 768px) {
-        #informativos {
-          grid-template-columns: 1fr;
-        }
-
-        #projectionTableWrapper {
+        #tableContainer {
           margin-top: 20px;
         }
       }
@@ -175,164 +132,112 @@
   <body>
     <h2>Cálculo do milhão</h2>
 
-    <div id="informativos">
-      <div
-        style="
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          flex-direction: column;
-        "
-      >
-        <div class="input-fields">
-          <div class="input-x">
-            <strong
-              >Banca inicial: US$<span id="initialBankDisplay"></span
-            ></strong>
-            <input type="number" id="bankInput" value="15" />
-          </div>
-          <div class="input-x">
-            <strong>% lucro diário:</strong>
-            <input type="number" id="daysInput" value="5" />
-          </div>
-          <div class="input-x">
-            <strong>Valor da margem de 0.01 lote</strong>
-            <input type="number" id="marginInput" value="13.12" />
-          </div>
+    <div id="inputContainer">
+      <div class="input-group">
+        <div class="input-field">
+          <strong>Banca inicial:</strong>
+          <input type="number" id="initialBank" value="30" />
+        </div>
+        <div class="input-field">
+          <strong>% Lucro Diário:</strong>
+          <input type="number" id="dailyProfitPercentage" value="5" />
+        </div>
+        <div class="input-field">
+          <strong>Dólar hoje:</strong>
+          <input type="number" id="dolarToday" value="5.97" />
         </div>
       </div>
     </div>
 
-    <div id="card-table" class="table-container">
-      <div id="card-table-button-container">
-        <button id="card-table-button" onclick="exportToPDF()">
+    <div id="tableContainer">
+      <div id="exportButtonContainer">
+        <button id="exportButton" onclick="exportToPDF()">
           Exportar para PDF
         </button>
       </div>
-      <div id="projectionTableWrapper">
-        <table id="projectionTable">
-          <thead>
-            <tr>
-              <th>Dia</th>
-              <th>Mês</th>
-              <th>Banca Inicial</th>
-              <th>Lucro do Dia</th>
-              <th>Banca Total</th>
-              <th>Meta %</th>
-              <th>Lote</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <table id="projectionTable">
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Dias Úteis</th>
+            <th>Lucro Diário U$</th>
+            <th>Lucro Mensal U$</th>
+            <th>Banca Final U$</th>
+            <th>Banca Final R$</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
 
     <script>
+      const workDays = {
+        Janeiro: 21,
+        Fevereiro: 19,
+        Março: 21,
+        Abril: 22,
+        Maio: 21,
+        Junho: 20,
+        Julho: 23,
+        Agosto: 21,
+        Setembro: 21,
+        Outubro: 23,
+        Novembro: 19,
+        Dezembro: 22,
+      };
+
+      function generateProjection() {
+        const dolarToday = parseFloat(
+          document.querySelector("#dolarToday").value
+        );
+        const initialBank = parseFloat(
+          document.querySelector("#initialBank").value
+        );
+        const dailyProfitPercentage =
+          parseFloat(document.querySelector("#dailyProfitPercentage").value) /
+          100;
+
+        let currentBank = initialBank;
+
+        const tableBody = document.querySelector("#projectionTable tbody");
+        tableBody.innerHTML = "";
+
+        for (const [month, days] of Object.entries(workDays)) {
+          const dailyProfit = currentBank * dailyProfitPercentage;
+          const monthlyProfit = dailyProfit * days;
+          currentBank += monthlyProfit;
+          let dolarTodayTable = dolarToday * currentBank;
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${month}</td>
+            <td>${days}</td>
+            <td>${dailyProfit.toFixed(2)}</td>
+            <td>${monthlyProfit.toFixed(2)}</td>
+            <td>${currentBank.toFixed(2)}</td>
+            <td>${dolarTodayTable.toFixed(2)}</td>
+          `;
+          tableBody.appendChild(row);
+        }
+      }
+
       function exportToPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        const initialBank = parseFloat(
-          document.querySelector("#bankInput").value
-        );
-        const days = parseInt(document.querySelector("#daysInput").value);
-        const operationsPerDay = parseInt(
-          document.querySelector("#operationsInput").value
-        );
-        const targetValue = parseFloat(
-          document.querySelector("#targetInput").value
-        );
-        const ticksPerOperation = parseInt(
-          document.querySelector("#ticksInput").value
-        );
-        const marginValue = parseFloat(
-          document.querySelector("#marginInput").value
-        );
-        doc.setFontSize(10);
-        doc.text(`Banca inicial: ${initialBank.toFixed(2)}`, 10, 10);
-        doc.text(`Dias: ${days}`, 10, 20);
-        doc.text(`Operações por dia: ${operationsPerDay}`, 10, 30);
-        doc.text(`Ticks por operação: ${ticksPerOperation}`, 10, 40);
-        doc.text(`Meta: ${targetValue.toFixed(2)}`, 10, 50);
-        doc.text(`Valor de 0.01 lote: ${marginValue.toFixed(2)}`, 10, 60);
+        doc.text("Cálculo do milhão", 10, 10);
+        doc.autoTable({ html: "#projectionTable", startY: 20 });
 
-        doc.autoTable({
-          html: "#projectionTable",
-          startY: 70,
-          styles: { fontSize: 8 },
-        });
-
-        doc.save("projection.pdf");
-      }
-
-      function generateProjection() {
-        const initialBank = parseFloat(
-          document.querySelector("#bankInput").value
-        );
-        const days = parseInt(document.querySelector("#daysInput").value);
-        const operationsPerDay = parseInt(
-          document.querySelector("#operationsInput").value
-        );
-        const targetValue = parseFloat(
-          document.querySelector("#targetInput").value
-        );
-        const ticksPerOperation = parseInt(
-          document.querySelector("#ticksInput").value
-        );
-        document.querySelector("#initialBankDisplay").textContent =
-          initialBank.toFixed(2);
-        const marginValue = parseFloat(
-          document.querySelector("#marginInput").value
-        );
-
-        const tableBody = document.querySelector("#projectionTable tbody");
-
-        tableBody.innerHTML = "";
-
-        for (let day = 1; day <= days; day++) {
-          const row = document.createElement("tr");
-
-          row.innerHTML = `
-            <td>${day}</td>
-            <td>${currentMonth}</td>
-            <td>${(bank - dailyProfit).toFixed(2)}</td>
-            <td>${dailyProfit.toFixed(2)}</td>
-            <td>${bank.toFixed(2)}</td>
-            <td>${dailyPercentage.toFixed(2)}</td>
-            <td>${lotValue.toFixed(2)}</td>
-          `;
-
-          tableBody.appendChild(row);
-        }
-
-        const formattedBankValue = new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-        }).format(bank);
-        document.querySelector("#finalBankValue").textContent =
-          formattedBankValue;
-        document.querySelector("#targetAchievedDay").textContent =
-          targetAchievedDay;
+        doc.save("calculo_do_milhao.pdf");
       }
 
       document
-        .querySelector("#bankInput")
+        .querySelector("#initialBank")
         .addEventListener("input", generateProjection);
       document
-        .querySelector("#daysInput")
+        .querySelector("#dailyProfitPercentage")
         .addEventListener("input", generateProjection);
       document
-        .querySelector("#operationsInput")
-        .addEventListener("input", generateProjection);
-      document
-        .querySelector("#ticksInput")
-        .addEventListener("input", generateProjection);
-      document
-        .querySelector("#targetInput")
-        .addEventListener("input", generateProjection);
-      document
-        .querySelector("#marginInput")
+        .querySelector("#dolarToday")
         .addEventListener("input", generateProjection);
 
       generateProjection();
