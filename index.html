@@ -186,6 +186,22 @@
         Dezembro: 22,
       };
 
+      async function fetchDollarRate() {
+        try {
+          const response = await fetch(
+            "https://economia.awesomeapi.com.br/json/last/USD-BRL"
+          );
+          const data = await response.json();
+          const high = parseFloat(data.USDBRL.high);
+          const low = parseFloat(data.USDBRL.low);
+          const average = ((high + low) / 2).toFixed(2);
+          document.querySelector("#dolarToday").value = average;
+          generateProjection();
+        } catch (error) {
+          console.error("Erro ao buscar a cotação do dólar:", error);
+        }
+      }
+
       function generateProjection() {
         const dolarToday = parseFloat(
           document.querySelector("#dolarToday").value
@@ -240,7 +256,7 @@
         .querySelector("#dolarToday")
         .addEventListener("input", generateProjection);
 
-      generateProjection();
+      fetchDollarRate();
     </script>
   </body>
 </html>
