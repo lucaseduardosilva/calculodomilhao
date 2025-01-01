@@ -182,217 +182,195 @@
         </style>
     </head>
     <body>
-        <h2>Cálculo do milhão</h2>
-        <div id="inputContainer">
-            <div class="input-group">
-                <div class="input-field">
-                    <strong>Banca inicial:</strong>
-                    <input type="number" id="initialBank" value="30" />
-                </div>
-                <div class="input-field">
-                    <strong>% Lucro Diário:</strong>
-                    <input type="number" id="dailyProfitPercentage" value="5" />
-                </div>
-                <div class="input-field">
-                    <strong>Dólar hoje:</strong>
-                    <input type="number" id="dolarToday" value="5.97" />
-                </div>
+    <h2>Cálculo do milhão</h2>
+    <div id="inputContainer">
+        <div class="input-group">
+            <div class="input-field">
+                <strong>Banca inicial:</strong>
+                <input type="number" id="initialBank" value="30" />
             </div>
-            <div><strong>Valor acumulado:</strong> <span id="totalProfit">0</span> $</div>
-            <div><strong>Faltam para 1 milhão:</strong> <span id="remaining">1,000,000</span> $</div>
-        </div>
-        <div id="calendarContainerBox">
-            <div id="calendarControls">
-                <div id="toggleText" onclick="showAllMonths()">Mostrar Todos</div>
-                <p onclick="prevMonth()">&lt;</p>
-                <p onclick="nextMonth()">&gt;</p>
+            <div class="input-field">
+                <strong>% Lucro Diário:</strong>
+                <input type="number" id="dailyProfitPercentage" value="5" />
             </div>
-            <div id="calendarContainer"></div>
-        </div>
-        <div id="modal">
-            <div id="modalContent">
-                <h3>Anotações para o dia <span id="modalDate"></span></h3>
-                <input type="number" id="dailyProfit" placeholder="Lucro do dia (em R$)" />
-                <textarea id="dailyNotes" placeholder="Anotações..." rows="4"></textarea>
-                <button onclick="saveDailyData()">Salvar</button>
+            <div class="input-field">
+                <strong>Dólar hoje:</strong>
+                <input type="number" id="dolarToday" value="5.97" />
             </div>
         </div>
-        <script>
-            async function fetchDollarRate() {
-              try {
-                const response = await fetch(
-                  "https://economia.awesomeapi.com.br/json/last/USD-BRL"
-                );
+        <div><strong>Valor acumulado:</strong> <span id="totalProfit">0</span> $</div>
+        <div><strong>Faltam para 1 milhão:</strong> <span id="remaining">1,000,000</span> $</div>
+    </div>
+    <div id="calendarContainerBox">
+        <div id="calendarControls">
+            <div id="toggleText" onclick="showAllMonths()">Mostrar Todos</div>
+            <p onclick="prevMonth()">&lt;</p>
+            <p onclick="nextMonth()">&gt;</p>
+        </div>
+        <div id="calendarContainer"></div>
+    </div>
+    <div id="modal">
+        <div id="modalContent">
+            <h3>Anotações para o dia <span id="modalDate"></span></h3>
+            <input type="number" id="dailyProfit" placeholder="Lucro do dia (em R$)" />
+            <textarea id="dailyNotes" placeholder="Anotações..." rows="4"></textarea>
+            <button onclick="saveDailyData()">Salvar</button>
+        </div>
+    </div>
+    <script>
+        async function fetchDollarRate() {
+            try {
+                const response = await fetch("https://economia.awesomeapi.com.br/json/last/USD-BRL");
                 const data = await response.json();
                 const high = parseFloat(data.USDBRL.high);
                 const low = parseFloat(data.USDBRL.low);
                 const average = ((high + low) / 2).toFixed(2);
                 document.querySelector("#dolarToday").value = average;
-                generateProjection();
-              } catch (error) {
+                updateStats();
+            } catch (error) {
                 console.error("Erro ao buscar a cotação do dólar:", error);
-              }
             }
-            
-                  const months = [
-                    "Janeiro",
-                    "Fevereiro",
-                    "Março",
-                    "Abril",
-                    "Maio",
-                    "Junho",
-                    "Julho",
-                    "Agosto",
-                    "Setembro",
-                    "Outubro",
-                    "Novembro",
-                    "Dezembro",
-                  ];
-                  
-                  let totalProfit = 0;
-                  const dailyData = {};
-                  const remainingElement = document.getElementById("remaining");
-                  const totalProfitElement = document.getElementById("totalProfit");
-                  
-                  function updateStats() {
+        }
 
-                  const dolarToday = parseFloat(document.querySelector("#dolarToday").value);
+        const months = [
+            "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+        ];
+
+        let totalProfit = 0;
+        const dailyData = {};
+        const remainingElement = document.getElementById("remaining");
+        const totalProfitElement = document.getElementById("totalProfit");
+
+        function updateStats() {
+            const dolarToday = parseFloat(document.querySelector("#dolarToday").value);
             totalProfitElement.textContent = (totalProfit / dolarToday).toLocaleString("en-US", {
-            style: "currency",
-            currency: "USD",
+                style: "currency",
+                currency: "USD"
             });
             const remaining = 1000000 / dolarToday - totalProfit / dolarToday;
             remainingElement.textContent = remaining.toLocaleString("en-US", {
-            style: "currency",
-            currency: "USD",
+                style: "currency",
+                currency: "USD"
             });
+        }
+
+        function openModal(date) {
+            const modal = document.getElementById("modal");
+            const modalDate = document.getElementById("modalDate");
+            const dailyProfitInput = document.getElementById("dailyProfit");
+            const dailyNotesTextarea = document.getElementById("dailyNotes");
+
+            modalDate.textContent = date;
+            dailyProfitInput.value = dailyData[date]?.profit || "";
+            dailyNotesTextarea.value = dailyData[date]?.notes || "";
+
+            modal.style.display = "flex";
+            modal.setAttribute("data-date", date);
+        }
+
+        function saveDailyData() {
+            const modal = document.getElementById("modal");
+            const date = modal.getAttribute("data-date");
+            const dailyProfitInput = document.getElementById("dailyProfit");
+            const dailyNotesTextarea = document.getElementById("dailyNotes");
+
+            const profit = parseFloat(dailyProfitInput.value) || 0;
+            const notes = dailyNotesTextarea.value;
+
+            dailyData[date] = { profit, notes };
+            totalProfit = Object.values(dailyData).reduce((sum, day) => sum + day.profit, 0);
+
+            updateStats();
+            generateCalendar();
+            closeModal();
+        }
+
+        function closeModal() {
+            const modal = document.getElementById("modal");
+            modal.style.display = "none";
+        }
+
+        let currentMonthIndex = 0;
+        let showAll = false;
+
+        function showAllMonths() {
+            showAll = !showAll;
+            generateCalendar();
+            document.getElementById("toggleText").innerText = showAll ? "Esconder Todos" : "Mostrar Todos";
+        }
+
+        function prevMonth() {
+            if (currentMonthIndex > 0) {
+                currentMonthIndex--;
+                showAll = false;
+                generateCalendar();
             }
-            
-                  
-                  function openModal(date) {
-                    const modal = document.getElementById("modal");
-                    const modalDate = document.getElementById("modalDate");
-                    const dailyProfitInput = document.getElementById("dailyProfit");
-                    const dailyNotesTextarea = document.getElementById("dailyNotes");
-                  
-                    modalDate.textContent = date;
-                    dailyProfitInput.value = dailyData[date]?.profit || "";
-                    dailyNotesTextarea.value = dailyData[date]?.notes || "";
-                  
-                    modal.style.display = "flex";
-                    modal.setAttribute("data-date", date);
-                  }
-                  
-                  function saveDailyData() {
-                    const modal = document.getElementById("modal");
-                    const date = modal.getAttribute("data-date");
-                    const dailyProfitInput = document.getElementById("dailyProfit");
-                    const dailyNotesTextarea = document.getElementById("dailyNotes");
-                  
-                    const profit = parseFloat(dailyProfitInput.value) || 0;
-                    const notes = dailyNotesTextarea.value;
-                  
-                    dailyData[date] = { profit, notes };
-                    totalProfit = Object.values(dailyData).reduce((sum, day) => sum + day.profit, 0);
-                  
-                    updateStats();
-                    generateCalendar();
-                    closeModal();
-                  }
-                  
-                  function closeModal() {
-                    const modal = document.getElementById("modal");
-                    modal.style.display = "none";
-                  }
-                  
-                  let currentMonthIndex = 0;
-                  let showAll = false;
-                  
-                  function showAllMonths() {
-                  showAll = !showAll;
-                  generateCalendar();
-                  document.getElementById("toggleText").innerText = showAll ? "Esconder Todos" : "Mostrar Todos";
-                  }
-                  
-                  function prevMonth() {
-                  if (currentMonthIndex > 0) {
-                  currentMonthIndex--;
-                  showAll = false;
-                  generateCalendar();
-                  }
-                  }
-                  
-                  function nextMonth() {
-                  if (currentMonthIndex < months.length - 1) {
-                  currentMonthIndex++;
-                  showAll = false;
-                  generateCalendar();
-                  }
-                  }
-                  
-                  function generateCalendar() {
-                  const calendarContainer = document.getElementById("calendarContainer");
-                  calendarContainer.innerHTML = "";
-                  
-                  const year = new Date().getFullYear();
-                  const monthIndices = showAll ? [...Array(12).keys()] : [currentMonthIndex];
-                  
-                  monthIndices.forEach((monthIndex) => {
-                  const monthDiv = document.createElement("div");
-                  monthDiv.classList.add("month");
-                  
-                  const monthTitle = document.createElement("h3");
-                  monthTitle.textContent = months[monthIndex];
-                  monthDiv.appendChild(monthTitle);
-                  
-                  const daysGrid = document.createElement("div");
-                  daysGrid.classList.add("days");
-                  
-                  const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-                  
-                  for (let day = 1; day <= daysInMonth; day++) {
-                  const date = `${day.toString().padStart(2, "0")}/${(monthIndex + 1).toString().padStart(2, "0")}/${year}`;
-                  
-                  const dayDiv = document.createElement("div");
-                  dayDiv.classList.add("day");
-                  dayDiv.onclick = () => openModal(date);
-                  
-                  const dateSpan = document.createElement("span");
-                  dateSpan.classList.add("date");
-                  dateSpan.textContent = day;
-                  
-                  const profitSpan = document.createElement("span");
-                  profitSpan.classList.add("profit");
-                  profitSpan.textContent = dailyData[date]?.profit
-                    ? `+${dailyData[date].profit.toLocaleString("en-US", {
-                        style: "currency",
-                        currency: "USD",
-                      })}`
-                    : "";
-                  
-                  dayDiv.appendChild(dateSpan);
-                  dayDiv.appendChild(profitSpan);
-                  daysGrid.appendChild(dayDiv);
-                  }
-                  
-                  monthDiv.appendChild(daysGrid);
-                  calendarContainer.appendChild(monthDiv);
-                  });
-                  }
-                  
-                  document.addEventListener("DOMContentLoaded", () => {
-                  generateCalendar();
-                  updateStats();
-                  });
-                  
-                  document.addEventListener("DOMContentLoaded", () => {
-                    fetchDollarRate();
-                    generateCalendar();
-                    updateStats();
-                  });
-            
-                  document.querySelector("#dolarToday").addEventListener("input", generateProjection);
-                
-        </script>
-    </body>
+        }
+
+        function nextMonth() {
+            if (currentMonthIndex < months.length - 1) {
+                currentMonthIndex++;
+                showAll = false;
+                generateCalendar();
+            }
+        }
+
+        function generateCalendar() {
+            const calendarContainer = document.getElementById("calendarContainer");
+            calendarContainer.innerHTML = "";
+
+            const year = new Date().getFullYear();
+            const monthIndices = showAll ? [...Array(12).keys()] : [currentMonthIndex];
+
+            monthIndices.forEach((monthIndex) => {
+                const monthDiv = document.createElement("div");
+                monthDiv.classList.add("month");
+
+                const monthTitle = document.createElement("h3");
+                monthTitle.textContent = months[monthIndex];
+                monthDiv.appendChild(monthTitle);
+
+                const daysGrid = document.createElement("div");
+                daysGrid.classList.add("days");
+
+                const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+                for (let day = 1; day <= daysInMonth; day++) {
+                    const date = `${day.toString().padStart(2, "0")}/${(monthIndex + 1).toString().padStart(2, "0")}/${year}`;
+
+                    const dayDiv = document.createElement("div");
+                    dayDiv.classList.add("day");
+                    dayDiv.onclick = () => openModal(date);
+
+                    const dateSpan = document.createElement("span");
+                    dateSpan.classList.add("date");
+                    dateSpan.textContent = day;
+
+                    const profitSpan = document.createElement("span");
+                    profitSpan.classList.add("profit");
+                    profitSpan.textContent = dailyData[date]?.profit
+                        ? `+${dailyData[date].profit.toLocaleString("en-US", {
+                            style: "currency",
+                            currency: "USD"
+                        })}`
+                        : "";
+
+                    dayDiv.appendChild(dateSpan);
+                    dayDiv.appendChild(profitSpan);
+                    daysGrid.appendChild(dayDiv);
+                }
+
+                monthDiv.appendChild(daysGrid);
+                calendarContainer.appendChild(monthDiv);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchDollarRate();
+            generateCalendar();
+            updateStats();
+        });
+    </script>
+</body>
 </html>
