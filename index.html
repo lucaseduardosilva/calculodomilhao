@@ -90,13 +90,14 @@
             background: #fff;
             border-radius: 8px;
             padding: 20px;
-            width: 300px;
             text-align: center;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
             }
             #modalContent input,
             #modalContent textarea {
-            width: 100%;
+            width: inherit;
             margin: 10px 0;
             padding: 8px;
             border: 1px solid #ddd;
@@ -212,7 +213,7 @@
     <div id="modal">
         <div id="modalContent">
             <h3>Anotações para o dia <span id="modalDate"></span></h3>
-            <input type="number" id="dailyProfit" placeholder="Lucro do dia (em R$)" />
+            <input type="number" id="dailyProfit" placeholder="Lucro do dia (em US$)" />
             <textarea id="dailyNotes" placeholder="Anotações..." rows="4"></textarea>
             <button onclick="saveDailyData()">Salvar</button>
         </div>
@@ -244,11 +245,11 @@
 
         function updateStats() {
             const dolarToday = parseFloat(document.querySelector("#dolarToday").value);
-            totalProfitElement.textContent = (totalProfit / dolarToday).toLocaleString("en-US", {
+            totalProfitElement.textContent = (totalProfit).toLocaleString("en-US", {
                 style: "currency",
                 currency: "USD"
             });
-            const remaining = 1000000 / dolarToday - totalProfit / dolarToday;
+            const remaining = 1000000 / dolarToday - totalProfit;
             remainingElement.textContent = remaining.toLocaleString("en-US", {
                 style: "currency",
                 currency: "USD"
