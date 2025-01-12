@@ -3,7 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	
     <title>Cálculo do milhão</title>
+	
     <style>
       body {
         font-family: "Inter", sans-serif;
@@ -178,6 +180,18 @@
         background-color: #e0e0e0;
         color: #2f2f2f;
       }
+	  .saveAllData {
+		background-color: #f0f0f0;
+		border:none;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        margin: 0;
+        padding: 10px;
+	  }
     </style>
   </head>
   <body>
@@ -214,7 +228,7 @@
           <p onclick="prevMonth()">&lt;</p>
           <p onclick="nextMonth()">&gt;</p>
         </div>
-        <div id="salvar" style="justify-self: flex-end;">Salvar</div>
+		<button class="saveAllData" style="justify-self: flex-end;" onclick="saveAllData()">Salvar</button>
       </div>
       <div id="calendarContainer"></div>
     </div>
@@ -237,6 +251,7 @@
     </div>
     <script>
       async function fetchDollarRate() {
+	  console.log('dollar');
         try {
           const response = await fetch(
             "https://economia.awesomeapi.com.br/json/last/USD-BRL"
@@ -251,6 +266,125 @@
           console.error("Erro ao buscar a cotação do dólar:", error);
         }
       }
+	let allData = {
+		"id": "-1",
+		"user_id": "-1",
+		"banca_inicial": "0",
+		"meta": "0",
+		"acumulado": "0",
+		"historico": ""
+	};
+	async function getData() {
+	try {
+		const response = await fetch(
+			"http://localhost/wordpress/wp-json/calculo-do-milhao/v1/historico/"
+		);
+		const data = await response.json();
+
+		console.log("getData: ->", data);
+
+		if (data.length === 0) {
+			console.log("Array vazio:", data);
+			openMandatoryModal();
+		} else {
+			allData = data[0];
+			console.log("all data", allData);
+		}
+	} catch (error) {
+		console.error("Erro ao buscar dados:", error);
+	}
+}
+
+function openMandatoryModal() {
+	const modal = document.getElementById("modal");
+	const modalContent = document.getElementById("modalContent");
+
+	modalContent.innerHTML = `
+		<h3>Informe os dados iniciais</h3>
+		<input type="number" id="initialBankInput" placeholder="Banca Inicial" />
+		<input type="number" id="metaInput" placeholder="Meta" />
+		<button onclick="saveMandatoryData()">Salvar</button>
+	`;
+
+	modal.style.display = "flex";
+}
+
+function saveMandatoryData() {
+	const initialBank = document.getElementById("initialBankInput").value;
+	const meta = document.getElementById("metaInput").value;
+
+	if (initialBank && meta) {
+		const payload = {
+			banca_inicial: parseFloat(initialBank),
+			meta: parseFloat(meta),
+			acumulado: 0,
+			historico: JSON.stringify([
+				{ dia: "2024-12-01", valor: 50, descricao: "Lucro inicial" }
+			])
+		};
+
+		fetch("http://localhost/wordpress/wp-json/calculo-do-milhao/v1/salvar/", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify(payload)
+		})
+		.then(response => {
+			if (response.ok) {
+				alert("Dados salvos com sucesso!");
+				getData();
+				closeModal();
+			} else {
+				alert("Erro ao salvar os dados. Verifique a API.");
+			}
+		})
+		.catch(error => {
+			console.error("Erro na requisição:", error);
+			alert("Erro ao conectar com a API.");
+		});
+	} else {
+		alert("Por favor, preencha todos os campos.");
+	}
+}
+
+function saveAllData() {
+	const initialBank = document.getElementById("initialBankInput").value;
+	const meta = document.getElementById("metaInput").value;
+
+	if (initialBank && meta) {
+		const payload = {
+			banca_inicial: parseFloat(initialBank),
+			meta: parseFloat(meta),
+			acumulado: 0,
+			historico: JSON.stringify([
+				{ dia: "2024-12-01", valor: 50, descricao: "Lucro inicial" }
+			])
+		};
+
+		fetch("http://localhost/wordpress/wp-json/calculo-do-milhao/v1/salvar/", {
+			method: "PUT",
+			headers: {
+				"Content-Type": "application/json"
+			},
+			body: JSON.stringify(payload)
+		})
+		.then(response => {
+			if (response.ok) {
+				alert("Dados atualizados com sucesso!");
+				getData();
+			} else {
+				alert("Erro ao atualizar os dados. Verifique a API.");
+			}
+		})
+		.catch(error => {
+			console.error("Erro na requisição:", error);
+			alert("Erro ao conectar com a API.");
+		});
+	} else {
+		alert("Por favor, preencha todos os campos.");
+	}
+}
 
       const months = [
         "Janeiro",
@@ -434,6 +568,7 @@
 
       document.addEventListener("DOMContentLoaded", () => {
         fetchDollarRate();
+		getData();
         generateCalendar();
         updateStats();
       });
