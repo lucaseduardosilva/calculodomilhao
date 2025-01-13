@@ -223,8 +223,8 @@
          <div style="display: flex; flex-direction: row;">
             <div id="calendarControls">
                <div id="toggleText" onclick="showAllMonths()">Mostrar Todos</div>
-               <p onclick="prevMonth()">&lt;</p>
-               <p onclick="nextMonth()">&gt;</p>
+               <p onclick="prevMonth()"><</p>
+               <p onclick="nextMonth()">></p>
             </div>
             <button class="saveAllData" style="justify-self: flex-end;" onclick="saveAllData()">Salvar</button>
          </div>
@@ -232,7 +232,7 @@
       </div>
       <div id="modal">
          <div id="modalContent">
-            <span id="closeModal" style="width:100%; display: flex; justify-content: flex-end; font-size: 20px; cursor: pointer;">&times;</span>
+            <span id="closeModal" style="width:100%; display: flex; justify-content: flex-end; font-size: 20px; cursor: pointer;">×</span>
             <h3>Anotações para o dia <span id="modalDate"></span></h3>
             <input
                type="number"
@@ -276,131 +276,141 @@
          "historico": ""
          };
          async function getData() {
-         try {
-         const response = await fetch(
-         "http://localhost/wordpress/wp-json/calculo-do-milhao/v1/historico/"
-         );
-         const data = await response.json();
+           try {
+             const response = await fetch(
+               "http://localhost/wordpress/wp-json/calculo-do-milhao/v1/historico/"
+             );
+             const data = await response.json();
          
-         console.log("getData: ->", data);
+             console.log("getData: ->", data);
          
-         if (data.length === 0) {
-         console.log("Array vazio:", data);
-         openMandatoryModal();
-         } else {
-         allData = data;
-		 if (allData.historico) {
-		 
-			try {
-			  allData.historico = JSON.parse(allData.historico);
-			  totalProfitElement.textContent = allData.acumulado.toLocaleString("en-US", {
-					style: "currency",
-					currency: "USD",
-				});
-			document.getElementById("initialBank").value = allData.banca_inicial;
-			document.getElementById("dailyProfitPercentage").value = allData.meta;
-
-			} catch (parseError) {
-			  console.error("Erro ao converter 'historico' em array:", parseError);
-			}
-		  }
-         }
-         } catch (error) {
-         console.error("Erro ao buscar dados:", error);
-         }
+             if (data.length === 0) {
+               console.log("Array vazio:", data);
+               openMandatoryModal();
+             } else {
+               allData = data;
+               if (allData.historico) {
+                 try {
+                   allData.historico = JSON.parse(allData.historico);
+                    allData.historico.forEach(item => {
+                         const [year, month, day] = item.dia.split('-');
+                         const formattedDate = `${day}/${month}/${year}`;
+                          dailyData[formattedDate] = { profit: item.valor, notes: item.descricao };
+                    });
+                    totalProfit = parseFloat(allData.acumulado);
+                   totalProfitElement.textContent = totalProfit.toLocaleString("en-US", {
+                     style: "currency",
+                     currency: "USD",
+                   });
+                   document.getElementById("initialBank").value = allData.banca_inicial;
+                   document.getElementById("dailyProfitPercentage").value = allData.meta;
+                   updateStats();
+                   generateCalendar();
+         
+                 } catch (parseError) {
+                   console.error("Erro ao converter 'historico' em array:", parseError);
+                 }
+               }
+             }
+           } catch (error) {
+             console.error("Erro ao buscar dados:", error);
+           }
          }
          
          function openMandatoryModal() {
-         const modal = document.getElementById("modal");
-         const modalContent = document.getElementById("modalContent");
+           const modal = document.getElementById("modal");
+           const modalContent = document.getElementById("modalContent");
          
-         modalContent.innerHTML = `
-         <h3>Informe os dados iniciais</h3>
-         <input type="number" id="initialBankInput" placeholder="Banca Inicial" />
-         <input type="number" id="metaInput" placeholder="Meta" />
-         <button onclick="saveMandatoryData()">Salvar</button>
-         `;
-         
-         modal.style.display = "flex";
+           modalContent.innerHTML =
+           `<h3>Informe os dados iniciais</h3>
+           <input type="number" id="initialBankInput" placeholder="Banca Inicial" />
+           <input type="number" id="metaInput" placeholder="Meta" />
+           <button onclick="saveMandatoryData()">Salvar</button>
+           `;
+           modal.style.display = "flex";
          }
          
          function saveMandatoryData() {
-         const initialBank = document.getElementById("initialBankInput").value;
-         const meta = document.getElementById("metaInput").value;
+           const initialBank = document.getElementById("initialBankInput").value;
+           const meta = document.getElementById("metaInput").value;
          
-         if (initialBank && meta) {
-         const payload = {
-         banca_inicial: parseFloat(initialBank),
-         meta: parseFloat(meta),
-         acumulado: 0,
-         historico: JSON.stringify([
-         { dia: "2024-12-01", valor: 50, descricao: "Lucro inicial" }
-         ])
-         };
+           if (initialBank && meta) {
+           const payload = {
+               banca_inicial: parseFloat(initialBank),
+               meta: parseFloat(meta),
+               acumulado: 0,
+               historico: JSON.stringify([])
+           };
          
-         fetch("http://localhost/wordpress/wp-json/calculo-do-milhao/v1/salvar/", {
-         method: "POST",
-         headers: {
-         "Content-Type": "application/json"
-         },
-         body: JSON.stringify(payload)
-         })
-         .then(response => {
-         if (response.ok) {
-         alert("Dados salvos com sucesso!");
-         getData();
-         closeModal();
-         } else {
-         alert("Erro ao salvar os dados. Verifique a API.");
-         }
-         })
-         .catch(error => {
-         console.error("Erro na requisição:", error);
-         alert("Erro ao conectar com a API.");
-         });
-         } else {
-         alert("Por favor, preencha todos os campos.");
-         }
+           fetch("http://localhost/wordpress/wp-json/calculo-do-milhao/v1/salvar/", {
+               method: "POST",
+               headers: {
+                   "Content-Type": "application/json"
+               },
+               body: JSON.stringify(payload)
+           })
+               .then(response => {
+                   if (response.ok) {
+                       alert("Dados salvos com sucesso!");
+                       getData();
+                       closeModal();
+                   } else {
+                       alert("Erro ao salvar os dados. Verifique a API.");
+                   }
+               })
+               .catch(error => {
+                   console.error("Erro na requisição:", error);
+                   alert("Erro ao conectar com a API.");
+               });
+           } else {
+               alert("Por favor, preencha todos os campos.");
+           }
          }
          
          function saveAllData() {
-         console.log('chamou');
-         const initialBank = document.getElementById("initialBank").value;
-         const meta = document.getElementById("dailyProfitPercentage").value;
-         const acumuladoSave = document.getElementById("totalProfit").value;
-         if (initialBank && meta) {
-         const payload = {
-         banca_inicial: parseFloat(initialBank),
-         meta: parseFloat(meta),
-         acumulado: parseFloat(acumuladoSave),
-         historico: JSON.stringify([
-         { dia: "2024-12-01", valor: 50, descricao: "Lucro inicial" },
-		 { dia: "2024-12-02", valor: 25, descricao: "Lucro inicial 2" }
-         ])
-         };
+           const initialBank = document.getElementById("initialBank").value;
+           const meta = document.getElementById("dailyProfitPercentage").value;
          
-         fetch("http://localhost/wordpress/wp-json/calculo-do-milhao/v1/salvar/", {
-         method: "PUT",
-         headers: {
-         "Content-Type": "application/json"
-         },
-         body: JSON.stringify(payload)
-         })
-         .then(response => {
-         if (response.ok) {
-         alert("Dados atualizados com sucesso!");
-         getData();
-         } else {
-         alert("Erro ao atualizar os dados. Verifique a API.");
-         }
-         })
-         .catch(error => {
-         console.error("Erro na requisição:", error);
-         alert("Erro ao conectar com a API.");
-         });
-         } else {
-         alert("Por favor, preencha todos os campos.");
-         }
+           if (initialBank && meta) {
+             const payload = {
+                id: allData.id,
+                banca_inicial: parseFloat(initialBank),
+                meta: parseFloat(meta),
+                acumulado: totalProfit,
+                historico: JSON.stringify(Object.entries(dailyData).map(([date, data]) => {
+                     const [day, month, year] = date.split('/');
+                     return {
+                         dia: `${year}-${month}-${day}`,
+                         valor: data.profit || 0,
+                         descricao: data.notes || '',
+                     }
+                 }))
+             };
+             fetch(
+               "http://localhost/wordpress/wp-json/calculo-do-milhao/v1/salvar/",
+               {
+                 method: "PUT",
+                 headers: {
+                   "Content-Type": "application/json",
+                 },
+                 body: JSON.stringify(payload),
+               }
+             )
+               .then((response) => {
+                 if (response.ok) {
+                   alert("Dados atualizados com sucesso!");
+                   getData();
+                 } else {
+                   alert("Erro ao atualizar os dados. Verifique a API.");
+                 }
+               })
+               .catch((error) => {
+                 console.error("Erro na requisição:", error);
+                 alert("Erro ao conectar com a API.");
+               });
+           } else {
+             alert("Por favor, preencha todos os campos.");
+           }
          }
          
          const months = [
